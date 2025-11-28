@@ -1,0 +1,15 @@
+FROM alpine:3.19
+
+# Instalando curl dentro do container
+RUN apk add --no-cache curl
+
+WORKDIR /app
+
+# Copiar o script do cliente
+COPY client.sh .
+
+# Dar permissão de execução
+RUN chmod +x client.sh
+
+# Comando padrão do container
+CMD ["./client.sh"]
