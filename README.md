@@ -1,3 +1,17 @@
+O projeto é uma coleção de 5 desafios progressivos que mostram conceitos de containerização e arquitetura distribuída. 
+
+Desafio 1 — Rede entre containers: comunicação básica entre dois containers (servidor + cliente).
+
+Desafio 2 — Volumes e persistência: persistir dados com volumes Docker usando SQLite.
+
+Desafio 3 — Docker Compose: orquestração de web + DB + cache (Postgres + Redis) com docker compose.
+
+Desafio 4 — Microsserviços independentes: dois serviços que se comunicam via HTTP (sem gateway).
+
+Desafio 5 — Microsserviços + API Gateway: dois microsserviços (users, orders) e um gateway como ponto único de entrada.
+
+A solução foi implementada com Python + Flask para APIs, Docker / Docker Compose para empacotamento e orquestração, SQLite/Postgres para persistência e Redis para cache (no Desafio 3). Cada serviço tem seu próprio Dockerfile para garantir isolamento.
+
 # Desafio 1 — Containers em Rede
 
 
@@ -6,16 +20,27 @@
 - **Dockerfile (server)**: Configura a imagem do servidor com Python e Flask.
 - **Dockerfile (client)**: Configura a imagem do cliente com Alpine e `curl`.
 
+## Fluxo:
+server (Flask) roda em porta 8080 no container server.
+
+client é um container Alpine que executa client.sh (loop com curl http://server:8080).
+
+Ambos são conectados a desafio1-net.
+
+client lê a resposta e escreve no stdout, que é visível via docker logs client.
+
+O que demonstra: resolução de nome do container na rede Docker, comunicação HTTP entre containers e visualização de logs.
+
 ---
 
 ## Como Rodar
 
 ```bash
-# 1. Criar a rede Docker customizada
+# 1. Entre na pasta desafio1 para criar a rede Docker customizada
 docker network create desafio1-net
 
 # 2. Build da imagem do servidor
-docker build -t d1-server -f Dockerfile.server
+docker build -t d1-server -f Dockerfile.server .
 
 # 3. Build da imagem do cliente
 docker build -t d1-client -f Dockerfile.client .
@@ -36,25 +61,36 @@ docker logs client
 - **app.py**: Script Python que cria um banco SQLite, insere dados aleatórios e imprime os registros.
 - **Dockerfile**: Imagem Python configurada para rodar o `app.py`.
 
+## Fluxo:
+Imagem d2-image roda app.py que cria data.db em /data.
+
+Container montado com -v desafio2-volume:/data grava data.db no volume.
+
+docker rm d2-db remove container
+
+Rodando novo container com o mesmo volume lê/insere novos registros no mesmo data.db.
+
+Resultado mostra crescimento da tabela a cada execução, provando persistência.
+
 ---
 
 ## Como Rodar
 
 ```bash
-# 1. Criar um volume Docker para persistência
+# 1. Entre na pasta desafio 2 para criar um volume Docker para persistência
 docker volume create desafio2-volume
 
 # 2. Build da imagem do container
 docker build -t d2-image .
 
 # 3. Rodar o container com volume montado
-docker run --name d2-db -v desafio2-vol:/data d2-image
+docker run --name d2-db -v desafio2-volume:/data d2-image
 
 # 4. Apagar o container
 docker rm d2-db
 
 # 4. Rodar novamente o container (mesmo volume)
-docker run --name d2-db -v desafio2-vol:/data d2-image
+docker run --name d2-db -v desafio2-volume:/data d2-image
 
 ````
 
@@ -66,22 +102,142 @@ docker run --name d2-db -v desafio2-vol:/data d2-image
 - **web/Dockerfile**: Imagem do serviço web.
 - **docker-compose.yml**: Orquestração dos 3 serviços com rede interna e volumes.
 
+## Fluxo:
+docker compose up --build cria serviços: web, db (Postgres), cache (Redis).
+
+Ao inicializar, web espera alguns segundos (time.sleep) para o DB disponibilizar.
+
+Requisição GET / ao web:
+
+tenta ler contador do Redis (cache.get("contador")).
+
+se ausente, assume 0.
+
+incrementa contador e grava novamente no Redis.
+
+registra no Postgres uma linha em logs com a mensagem do acesso.
+
+Endpoint /log consulta Postgres e retorna histórico.
+
 ---
 
 ## Como Rodar
 
 ```bash
-# 1. Build e start dos serviços via Docker Compose
+# 1. Entre na pasta desafio3 e execute:
 docker-compose up --build -d
 
 # 2. Verificar logs do serviço web
-docker-compose logs -f web
+docker compose logs -f web
 
 # 3. Testar endpoints da API
 # Listar todos os alunos
-curl http://localhost:5000/todos
+http://localhost:5000/todos
 
 # Consultar aluno específico
-curl http://localhost:5000/aluno/1
+http://localhost:5000/aluno/1 (trocar o id (2,3) para consultar outros alunos)
+
+````
+
+# Desafio 4 - Microsserviços Independentes
+
+
+- **Service A — Fornece lista de usuários**
+  
+  Porta: 5001  
+  
+  Endpoint principal: /usuarios  
+  
+  Retorna JSON com usuários  
+
+- **Service B — Consume Service A**
+  Porta: 7000
+  
+  Endpoint principal: /info  
+  
+  Faz requisição HTTP para Service A usando:  
+  
+  http://service_a:5001/usuarios  
+
+## Fluxo: 
+service_a expõe /usuarios (porta 5001).
+
+service_b expõe /info (porta 7000) e faz requests.get("http://service_a:5001/usuarios").
+
+Compose garante service_b consegue resolver o hostname service_a.
+
+service_b transforma a lista retornada em frases “Usuário X (Y anos) - ativo desde 2023”.
+
+---
+
+## Como rodar
+
+```bash
+# 1. Entre na pasta desafio4 e execute:
+docker compose up --build
+
+# 2. Testar service A
+http://localhost:5001/usuarios
+
+# 3. Testar service B
+http://localhost:7000/info
+
+
+````
+
+# Desafio 5 - Microsserviços com API Gateway
+
+- **Users Service (fornece usuários)**
+
+- **Orders Service (fornece pedidos)**
+
+- **Gateway**
+
+## Fluxo:  
+users_service em 5003 fornece /users.
+
+orders_service em 5002 fornece /orders.
+
+gateway em 5004 tem endpoints /users e /orders e:
+
+repassa as chamadas internamente para http://users_service:5003/users e http://orders_service:5002/orders.
+
+retorna resultados
+
+Gateway atua como ponto único de entrada
+
+---
+
+# Como rodar
+
+```bash
+# 1. Entre na pasta desafio5 e execute:
+docker compose up --build
+
+# 2. Testando Endpoints:
+http://localhost:5003/users
+http://localhost:5002/orders
+
+# 3. Gateways
+http://localhost:5004/users
+http://localhost:5004/orders
+
+
+````
+
+# Tecnologias Utilizadas
+Docker	
+
+Docker Compose	
+
+Python 3.10	 
+
+Flask	 
+
+Requests	
+
+SQLite / Postgres	 
+
+Redis
 
 
