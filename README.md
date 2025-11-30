@@ -12,6 +12,7 @@ Desafio 5 — Microsserviços + API Gateway: dois microsserviços (users, orders
 
 A solução foi implementada com Python + Flask para APIs, Docker / Docker Compose para empacotamento e orquestração, SQLite/Postgres para persistência e Redis para cache (no Desafio 3). Cada serviço tem seu próprio Dockerfile para garantir isolamento.
 
+Obs: é necessário entrar na pasta "docker" para conseguir entrar nas pastas do desafio.
 # Desafio 1 — Containers em Rede
 
 
