@@ -12,14 +12,23 @@ Desafio 5 — Microsserviços + API Gateway: dois microsserviços (users, orders
 
 A solução foi implementada com Python + Flask para APIs, Docker / Docker Compose para empacotamento e orquestração, SQLite/Postgres para persistência e Redis para cache (no Desafio 3). Cada serviço tem seu próprio Dockerfile para garantir isolamento.
 
-Obs: é necessário entrar na pasta "docker" para conseguir entrar nas pastas do desafio.
+<br>
 
+# Configuração de ambiente  
+
+Docker instalado e executando  
+
+Docker Compose  
+
+Obs: é necessário entrar na pasta "docker" para conseguir entrar nas pastas dos desafios.  
+
+<br>
 
 # Desafio 1 — Containers em Rede
 
 
-- **server/server.py**: Servidor Flask que responde a requisições HTTP.
-- **client/client.sh**: Script que realiza requisições HTTP para o servidor em loop.
+- **server.py**: Servidor Flask que responde a requisições HTTP.
+- **client.sh**: Script que realiza requisições HTTP para o servidor em loop.
 - **Dockerfile (server)**: Configura a imagem do servidor com Python e Flask.
 - **Dockerfile (client)**: Configura a imagem do cliente com Alpine e `curl`.
 
@@ -69,7 +78,7 @@ docker run -d --network desafio1-net --name client d1-client
 docker logs client
 ````
 
-
+<br>
 
 # Desafio 2 — Volumes e Persistência
 
@@ -121,14 +130,14 @@ docker run --name d2-db -v desafio2-volume:/data d2-image
 
 ````
 
-
+<br>
 
 # Desafio 3 — Docker Compose Orquestrando Serviços
 
 
-- **web/app.py**: API Flask que consulta dados no PostgreSQL e usa Redis como cache.
-- **web/requirements.txt**: Dependências do Python (`Flask`, `psycopg2-binary`, `redis`).
-- **web/Dockerfile**: Imagem do serviço web.
+- **app/app.py**: API Flask que consulta dados no PostgreSQL e usa Redis como cache.
+- **app/requirements.txt**: Dependências do Python (`Flask`, `psycopg2-binary`, `redis`).
+- **app/Dockerfile**: Imagem do serviço web.
 - **docker-compose.yml**: Orquestração dos 3 serviços com rede interna e volumes.
 
 ## Fluxo
@@ -181,7 +190,7 @@ http://localhost:5000/aluno/1 (trocar o id (2,3) para consultar outros alunos)
 
 ````
 
-
+<br>
 
 # Desafio 4 - Microsserviços Independentes
 
@@ -236,7 +245,7 @@ http://localhost:7000/info
 
 ````
 
-
+<br>
 
 # Desafio 5 - Microsserviços com API Gateway
 
