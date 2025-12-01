@@ -299,12 +299,18 @@ http://localhost:5004/orders
 ````
 
 # Tecnologias Utilizadas
-Docker - Containerização
-Docker Compose - Orquestração de containers
-Python 3.11 - Linguagem de programação
-Flask - Framework web
-PostgreSQL - Banco de dados relacional
-Redis - Cache em memória
-SQLite - Banco de dados embarcado
+Docker - Containerização  
+
+Docker Compose - Orquestração de containers  
+
+Python 3.11 - Linguagem de programação  
+
+Flask - Framework web  
+
+PostgreSQL - Banco de dados relacional  
+
+Redis - Cache em memória  
+
+SQLite - Banco de dados embarcado 
 
 
